@@ -3,22 +3,26 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const citasRoutes = require('./routes/citasRoutes');
 const contactoRoutes = require('./routes/contactoRoutes');
-const authRoutes = require('./routes/auth.routes');  // <-- ESTA LÍNEA ESTÁ CORRECTA
+const authRoutes = require('./routes/auth.routes');  
 const usuariosRoutes = require('./routes/user.routes');
-const app = express();
 const historiasRoutes = require('./routes/historias');
-const serviciosRoutes = require('./routes/serviciosRoutes'); // Importación de rutas de servicios
+const serviciosRoutes = require('./routes/serviciosRoutes');
 const multer = require('multer');
 const path = require('path');
 const uploadRoutes = require('./routes/uploadRoutes');
-// Configurar CORS
+
+// Configuración de Express
+const app = express();
+
+// Configuración de CORS
 app.use(cors({
-  origin:   'https://www.pruebasenproduccion.site',
-  // Permitir solicitudes desde el frontend
-  
-  //   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Métodos permitidos
-  allowedHeaders: ['Content-Type', 'Authorization'], // Cabeceras permitidas
+  origin: 'https://www.pruebasenproduccion.site',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+// Ruta para manejar OPTIONS
+app.options('*', cors());
 
 // Configuración de Multer
 const storage = multer.diskStorage({
@@ -31,7 +35,7 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: function (req, file, cb) {
@@ -52,17 +56,16 @@ app.post('/api/upload', upload.single('imagen'), (req, res) => {
     return res.status(400).json({ success: false, error: 'No se subió ninguna imagen' });
   }
   
-  res.json({ 
+  res.json({
     success: true, 
-    url: `/uploads/${req.file.filename}` 
+    url: `/uploads/${req.file.filename}`
   });
 });
 
 // Servir archivos estáticos
 app.use('/uploads', express.static('public/uploads'));
-app.use('/api/upload', uploadRoutes);
+
 // Middlewares
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -74,14 +77,12 @@ mongoose.connect('mongodb+srv://mariofraco93:Ma104291*@leclatdb.dvt9irn.mongodb.
 // Configuración de rutas
 app.use('/api', usuariosRoutes);
 app.use('/api/usuarios', usuariosRoutes);
-app.use('/api/auth', require('./routes/auth.routes')); // Rutas de autenticación
-app.use('/api/citas', citasRoutes);  // Rutas de citas
-app.use('/api/auth', authRoutes);  // Rutas de autenticación
-app.use('/api/contacto', contactoRoutes);  // Rutas de contacto
-app.use('/api/historias', historiasRoutes); // Rutas de historias clínicas
-app.use('/api/servicios', serviciosRoutes); // Nuevas rutas de servicios <-- AGREGADO
+app.use('/api/auth', authRoutes);
+app.use('/api/citas', citasRoutes);
+app.use('/api/contacto', contactoRoutes);
+app.use('/api/historias', historiasRoutes);
+app.use('/api/servicios', serviciosRoutes);
 app.use('/api/upload', uploadRoutes);
-// Iniciar servidor
-app.listen(5000, () => {
-  console.log('🚀 Servidor corriendo en http://localhost:5000');
-});
+
+// Exportar la app para que Vercel la pueda usar
+module.exports = app;
